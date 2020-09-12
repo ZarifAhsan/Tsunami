@@ -20,19 +20,15 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 
 public class MainActivity extends AppCompatActivity {
 
-//    Tag for the log messages
     public static final String LOG_TAG = MainActivity.class.getSimpleName();
 
-    /** URL to query the USGS dataset for earthquake information */
     private static final String USGS_REQUEST_URL =
             "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2014-01-01&endtime=2014-12-01&minmagnitude=7";
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,35 +39,23 @@ public class MainActivity extends AppCompatActivity {
         task.execute();
     }
 
-    /**
-     * Update the screen to display information from the given {@link Event}.
-     */
     private void updateUi(Event earthquake) {
-        // Display the earthquake title in the UI
         TextView titleTextView = findViewById(R.id.title);
         titleTextView.setText(earthquake.title);
 
-        // Display the earthquake date in the UI
         TextView dateTextView = findViewById(R.id.date);
         dateTextView.setText(getDateString(earthquake.time));
 
-        // Display whether or not there was a tsunami alert in the UI
         TextView tsunamiTextView = findViewById(R.id.tsunami_alert);
         tsunamiTextView.setText(getTsunamiAlertString(earthquake.tsunamiAlert));
     }
 
-    /**
-     * Returns a formatted date and time string for when the earthquake happened.
-     */
     private String getDateString(long timeInMilliseconds) {
         @SuppressLint("SimpleDateFormat")
         SimpleDateFormat formatter = new SimpleDateFormat("EEE, d MMM yyyy 'at' HH:mm:ss z");
         return formatter.format(timeInMilliseconds);
     }
 
-    /**
-     * Return the display string for whether or not there was a tsunami alert for an earthquake.
-     */
     private String getTsunamiAlertString(int tsunamiAlert) {
         switch (tsunamiAlert) {
             case 0:
@@ -83,37 +67,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * {@link AsyncTask} to perform the network request on a background thread, and then
-     * update the UI with the first earthquake in the response.
-     */
     @SuppressLint("StaticFieldLeak")
     private class TsunamiAsyncTask extends AsyncTask<URL, Void, Event> {
 
         @Override
         protected Event doInBackground(URL... urls) {
-            // Create URL object
             URL url = createUrl();
 
-            // Perform HTTP request to the URL and receive a JSON response back
             String jsonResponse = "";
             try {
                 assert url != null;
                 jsonResponse = makeHttpRequest(url);
             } catch (IOException e) {
-                // TODO Handle the IOException
+                Log.e(LOG_TAG, "IOException seen", e);
             }
 
-            // Extract relevant fields from the JSON response and create an {@link Event} object
-
-            // Return the {@link Event} object as the result fo the {@link TsunamiAsyncTask}
             return extractFeatureFromJson(jsonResponse);
         }
 
-        /**
-         * Update the screen with the given earthquake (which was the result of the
-         * {@link TsunamiAsyncTask}).
-         */
         @Override
         protected void onPostExecute(Event earthquake) {
             if (earthquake == null) {
@@ -123,9 +94,6 @@ public class MainActivity extends AppCompatActivity {
             updateUi(earthquake);
         }
 
-        /**
-         * Returns new URL object from the given string URL.
-         */
         private URL createUrl() {
             URL url;
             try {
@@ -137,9 +105,6 @@ public class MainActivity extends AppCompatActivity {
             return url;
         }
 
-        /**
-         * Make an HTTP request to the given URL and return a String as the response.
-         */
         private String makeHttpRequest(URL url) throws IOException {
             String jsonResponse = "";
             HttpURLConnection urlConnection = null;
@@ -171,10 +136,6 @@ public class MainActivity extends AppCompatActivity {
             return jsonResponse;
         }
 
-        /**
-         * Convert the {@link InputStream} into a String which contains the
-         * whole JSON response from the server.
-         */
         private String readFromStream(InputStream inputStream) throws IOException {
             StringBuilder output = new StringBuilder();
             if (inputStream != null) {
@@ -189,10 +150,6 @@ public class MainActivity extends AppCompatActivity {
             return output.toString();
         }
 
-        /**
-         * Return an {@link Event} object by parsing out information
-         * about the first earthquake from the input earthquakeJSON string.
-         */
         private Event extractFeatureFromJson(String earthquakeJSON) {
 
             if (TextUtils.isEmpty(earthquakeJSON)) {
